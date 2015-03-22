@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>2D Sierpinski Gasket</title>
+
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+attribute vec4 aPosition;
+attribute vec4 aNormal;
+attribute vec2 aTextureCoord;
+
+uniform mat4 modelView;
+uniform mat4 projection;
+
+uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+uniform vec4 lightPosition;
+uniform float shininess;
+
+varying vec2 vTextureCoord;
+
+varying vec4 lighting;
+
+precision mediump float;
+
+void
+main()
+{
+	vTextureCoord = aTextureCoord;
+	gl_Position = projection * modelView * aPosition;
+	
+	vec3 pos = -(modelView * aPosition).xyz;
+	vec3 light = lightPosition.xyz;
+
+	vec3 L = normalize(light - pos);	
+	vec3 E = normalize(-pos);
+	vec3 H = normalize(L + E);
+	vec3 N = normalize( (modelView*aNormal).xyz);
+	
+	vec4 ambient = ambientProduct;
+	
+	float Kd = max(dot(L, N), 0.0);
+	
+	vec4 diffuse = Kd * diffuseProduct;
+	
+	float Ks = pow(max(dot(N, H), 0.0), shininess);
+	
+	vec4 specular = vec4(0.0,0.0,0.0,1.0);
+	
+	if( dot(L,N) < 0.0 ) {
+		specular = vec4(0.0,0.0,0.0,1.0);
+	}
+
+	lighting = (ambient+diffuse+specular);
+
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform sampler2D textureUnit0;
+
+varying vec2 vTextureCoord;
+
+varying vec4 lighting;
+
+void
+main()
+{
+    gl_FragColor = texture2D(textureUnit0, vTextureCoord)*lighting;
+}
+</script>
+<script type="text/javascript" src="Common/webgl-utils.js"></script>
+<script type="text/javascript" src="Common/initShaders.js"></script>
+<script type="text/javascript" src="Common/MV.js"></script>
+<script type="text/javascript" src="Textures.js"></script>
+</head>   
+
+
+<body>
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+<div>Textures:
+	<button id="remove_texture">Remove Texture</button>
+	<button id="checker_texture">Checkerboard</button>
+	<button id="ground_texture">Dirt</button>
+	<button id="planet_texture">Mercury</button>
+</div>
+
+<div>Lighting:
+	<button id="toggle_lighting">Remove Lighting</button>
+</div>
+
+<div>Picking:
+	<button id="picking">Enable Picking</button>
+</div>
+
+<div>
+	<p>Camera: WS forward/back, AD left/right, RF look up/down, QE look left/right</p>
+	<p>Sphere: IK forward/back, JL left/right</p>
+	<p>Picking bugs out with movement, so must remain stationary.</p>
+</div>
+
+</body>
+</html>
